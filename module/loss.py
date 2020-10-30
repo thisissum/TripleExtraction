@@ -19,3 +19,22 @@ class BinaryFocalLoss(nn.Module):
         elif reduction is None:
             return -loss
         return -loss
+
+class SparseBCEWithWeightLoss(nn.Module):
+    def __init__(self, pos_weight=1, ignore_idx=-100):
+        super(SparseBCEWithWeightLoss, self).__init__()
+        self.pos_weight = pos_weight
+        self.ignore_idx = ignore_idx
+
+    def forward(self, inputs, targets, reduction="mean"):
+        mask = targets!=self.ignore_idx
+        targets = torch.masked_select(targets, mask)
+        inputs = torch.masked_select(inputs, mask)
+        loss = targets * torch.log(inputs) * self.pos_weight + (1-targets) * torch.log(1-inputs)
+        if reduction == 'mean':
+            loss = loss.mean()
+        elif reduction == 'sum':
+            loss = loss.sum()
+        elif reduction is None:
+            return -loss
+        return -loss
